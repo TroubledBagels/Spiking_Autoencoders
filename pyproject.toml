@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spiking-autoencoders"
+version = "0.1.0"
+description = "Experimental spiking autoencoders using STDP, CMA-ES, and EGGROLL."
+readme = "readme.md"
+requires-python = ">=3.10,<4.0"
+keywords = ["spiking-neural-networks", "autoencoders", "stdp", "cma-es", "eggroll"]
+dependencies = [
+    "numpy>=1.24",
+    "torch>=2.1",
+    "torchvision>=0.16",
+    "torchaudio>=2.1",
+    "cma>=3.3",
+    "matplotlib>=3.7",
+    "pandas>=2.0",
+    "h5py>=3.8",
+    "ipython>=8.0",
+    "speech2spikes>=1.0.1",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+# Only needed by snntorch_testing.py.
+snntorch = ["snntorch>=0.9"]
+
+[project.urls]
+Repository = "https://github.com/TroubledBagels/Spiking_Autoencoders"
+
+[tool.setuptools]
+# Preserve the repository's existing top-level imports.
+include-package-data = false
+py-modules = [
+    "CMAES_Autoencoder",
+    "CMAES_GridSearch",
+    "EDDataset",
+    "EGGROLL_Autoencoder",
+    "EGGROLL_torch",
+    "EGGROLL_utils",
+    "SHDDataset",
+    "SymmetricCMAES",
+    "SymmetricEGGROLL",
+    "learn_auto",
+    "migrate_gridsearch_outputs",
+    "plot_results",
+    "snntorch_testing",
+    "stdp_test_two_weights",
+    "testing_stdp_basic",
+    "testing_stdp_total",
+    "try_learning",
+]
+
+[tool.setuptools.packages.find]
+# network_model/ is a namespace package without __init__.py.
+where = ["."]
+include = ["network_model", "network_model.*"]
+exclude = ["network_model.__pycache__", "network_model.__pycache__.*"]
+namespaces = true

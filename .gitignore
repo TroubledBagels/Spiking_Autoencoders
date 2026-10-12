@@ -3,3 +3,11 @@ EpochPlots
 GridSearchOuts
 ExportedWeights
 SymmetricEpochPlots
+__pycache__/
+*.py[cod]
+.idea/
+.DS_Store
+.venv/
+*.egg-info/
+build/
+dist/

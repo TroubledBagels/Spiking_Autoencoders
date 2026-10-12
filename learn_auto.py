@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 warnings.filterwarnings("ignore")
 
-def train(model: N.Network, train_loader, test_loader, n_epochs=100):
+def train(model: N.Network, train_loader, test_loader, n_epochs=100, delay=0):
 
     for epoch in range(n_epochs):
         if epoch == 4:
@@ -204,6 +204,8 @@ if __name__ == "__main__":
     home = pathlib.Path("~").expanduser()
     local_dir = home / "data" / "URBAN-SED"
 
+    DELAY = 2
+
     a_transform = transforms.Compose([
         torchaudio.transforms.Resample(44100, 16000),
         edd.UnsqueezeTransform(dim=0),
@@ -225,4 +227,4 @@ if __name__ == "__main__":
         L.STDP_FCLayer(input_num=10, layer_size=10)
     ])
 
-    train(model, tr_dl, te_dl)
+    train(model, tr_dl, te_dl, delay=DELAY)

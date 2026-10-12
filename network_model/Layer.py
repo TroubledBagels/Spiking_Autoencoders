@@ -474,3 +474,46 @@ class CMAES_FCLayer:
 
     def __repr__(self):
         return self.__str__()
+
+class EGGROLL_FCLayer(CMAES_FCLayer):
+    """LIF FC layer with a batched, factorised EGGROLL population forward pass.
+
+    Single-sample calls exactly inherit CMAES_FCLayer's behaviour, including
+    weights/get_params/set_params/reset_state. Population training instead calls
+    population_step with inputs (population, input_num), membrane state
+    (population, layer_size), and optional rank-r factors (A, B), with:
+
+        current = inputs @ weights + sigma / sqrt(rank) * (inputs @ A) @ B.T
+
+    Crucially no P x input_num x layer_size dense perturbations are allocated.
+    """
+    def __init__(self, input_num: int, layer_size: int, record_state=False,
+                 n_type=NeuronType.LIF_total, decay=0.9):
+        super().__init__(input_num, layer_size, record_state=record_state,
+                         n_type=n_type, decay=decay)
+        self.name = "EGGROLL FC"
+
+    def population_step(self, inputs, membrane, factors=None, sigma=0.):
+        inputs = np.asarray(inputs, dtype=np.float64)
+        if inputs.ndim != 2 or inputs.shape[1] != self.input_num:
+            raise ValueError(f"Expected population inputs (P, {self.input_num})")
+        if membrane.shape != (inputs.shape[0], self.layer_size):
+            raise ValueError(f"Expected membrane {(inputs.shape[0], self.layer_size)}")
+        if self.n_type != NeuronType.LIF_total:
+            raise NotImplementedError(f"{self.n_type} not implemented")
+        current = inputs @ self.weights  # shared dense weights across all candidates
+        if factors is not None:
+            a, b = factors
+            if a.shape[:2] != (len(inputs), self.input_num) or b.shape[:2] != (len(inputs), self.layer_size):
+                raise ValueError("Low-rank population factors have wrong dimensions")
+            rank = a.shape[-1]
+            if rank < 1 or b.shape[-1] != rank:
+                raise ValueError("Rank must match and be >= 1")
+            projected = np.einsum("pi,pir->pr", inputs, a, optimize=True)
+            current += (sigma / np.sqrt(rank)) * np.einsum("pr,por->po", projected, b, optimize=True)
+        membrane += current
+        spikes = (membrane >= self.threshold).astype(np.int64)
+        membrane[spikes != 0] = 0.
+        np.maximum(membrane, 0., out=membrane)
+        membrane *= self.decay
+        return spikes

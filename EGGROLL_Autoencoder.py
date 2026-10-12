@@ -125,7 +125,12 @@ if __name__ == "__main__":
     train_dl = torch.utils.data.DataLoader(train_ds, batch_size=1, shuffle=True)
     test_dl = torch.utils.data.DataLoader(test_ds, batch_size=1, shuffle=False)
     model = N.Network()
-    model.add([L.EGGROLL_FCLayer(700, 70), L.EGGROLL_FCLayer(70, 700)])
+    model.add([
+        L.EGGROLL_FCLayer(700, 222),
+        L.EGGROLL_FCLayer(222, 70),
+        L.EGGROLL_FCLayer(70, 222),
+        L.EGGROLL_FCLayer(222, 700),
+    ])
     history, metrics, silent = train(
         model, train_dl, test_dl, generations=250,
         sigma=.15, population_size=32, rank=4, learning_rate=.002,

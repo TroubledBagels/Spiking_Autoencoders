@@ -40,9 +40,11 @@ def train(
     device='auto'|'cuda'|'mps'|'cpu' and dtype='float32'|'float64'.
     Layers may be either CMAES_FCLayer or EGGROLL_FCLayer.
     """
+    print("Training EGGROLL...")
     if generations < 1:
         raise ValueError("generations must be >= 1")
     backend = TorchSpikingModel(net, device=device, dtype=dtype)
+    print("Intialised model to device")
     engine = TorchEGGROLL(
         backend, net.layers, sigma=sigma, learning_rate=learning_rate,
         population_size=population_size, rank=rank, seed=seed,

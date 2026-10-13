@@ -77,8 +77,9 @@ class TorchSpikingModel:
         self.weights: dict[int, torch.Tensor] = {}
         self.thresholds: dict[int, torch.Tensor] = {}
         self.decays: dict[int, float] = {}
-        for layer in net.layers:
+        for i, layer in enumerate(net.layers):
             self.register(layer)
+            print(f"Initialised layer {i}")
 
     def register(self, layer):
         _check_compatible_layer(layer)
@@ -264,6 +265,7 @@ class TorchEGGROLL:
         self.t = 0
         self.m = [torch.zeros_like(backend.weights[id(layer)]) for layer in self.modules]
         self.v = [torch.zeros_like(backend.weights[id(layer)]) for layer in self.modules]
+        print(f"Initialised model with sigma = {self.sigma}, learning rate = {self.learning_rate}")
 
     @torch.no_grad()
     def ask(self):

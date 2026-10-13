@@ -21,11 +21,8 @@ dependencies = [
     "ipython>=8.0",
     "speech2spikes>=1.0.1",
     "tqdm>=4.66",
+    "snntorch>=0.9"
 ]
-
-[project.optional-dependencies]
-# Only needed by snntorch_testing.py.
-snntorch = ["snntorch>=0.9"]
 
 [project.urls]
 Repository = "https://github.com/TroubledBagels/Spiking_Autoencoders"

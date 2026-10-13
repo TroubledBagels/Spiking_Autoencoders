@@ -146,7 +146,7 @@ if __name__ == "__main__":
     print("Added layers")
     history, metrics, silent = train(
         model, train_dl, test_dl, generations=1000,
-        sigma=.15, population_size=128, rank=4, learning_rate=.002,
+        sigma=.03, population_size=128, rank=4, learning_rate=.002,
         samples_per_generation=32, test_samples=16, plot_every=10, delay=0,
         device="auto",
     )

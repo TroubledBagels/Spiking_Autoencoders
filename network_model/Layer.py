@@ -414,7 +414,7 @@ class CMAES_FCLayer:
         self.layer_size = layer_size
 
         self.u = np.zeros(layer_size)
-        self.weights = np.random.uniform(0.02, 0.15, size=(input_num, layer_size))
+        self.weights = np.random.uniform(-0.05, 0.05, size=(input_num, layer_size))
         self.threshold = 1.0
 
         self.record_state = record_state

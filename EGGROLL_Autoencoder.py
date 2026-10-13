@@ -117,26 +117,37 @@ def train(
 
 
 if __name__ == "__main__":
+    print("Starting EGGROLL Autoencoder")
     import torch
+    print("Imported torch")
     from network_model import Layer as L, Network as N
+    print("Imported network")
     import SHDDataset as SHD
+    print("Imported dataset")
 
     local_dir = Path("~/data/shd/SHD").expanduser()
+    print("Local directory", local_dir)
     train_ds = SHD.SHDDataset(local_dir, train=True)
+    print("Loaded train dataset")
     test_ds = SHD.SHDDataset(local_dir, train=False)
+    print("Loaded test dataset")
     train_dl = torch.utils.data.DataLoader(train_ds, batch_size=1, shuffle=True)
+    print("Loaded train dataloader")
     test_dl = torch.utils.data.DataLoader(test_ds, batch_size=1, shuffle=False)
+    print("Loaded test dataloader")
     model = N.Network()
+    print("Created model")
     model.add([
         L.EGGROLL_FCLayer(700, 222),
         L.EGGROLL_FCLayer(222, 70),
         L.EGGROLL_FCLayer(70, 222),
         L.EGGROLL_FCLayer(222, 700),
     ])
+    print("Added layers")
     history, metrics, silent = train(
-        model, train_dl, test_dl, generations=250,
-        sigma=.15, population_size=32, rank=4, learning_rate=.002,
-        samples_per_generation=16, test_samples=16, plot_every=10, delay=0,
+        model, train_dl, test_dl, generations=1000,
+        sigma=.15, population_size=128, rank=4, learning_rate=.002,
+        samples_per_generation=32, test_samples=16, plot_every=10, delay=0,
         device="auto",
     )
     export_weights(model)

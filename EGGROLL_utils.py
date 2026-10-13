@@ -158,22 +158,109 @@ def align_for_delay(input_values, output_values, delay=0):
     return a, b
 
 
-def reconstruction_loss_components(input_spikes, output_spikes, trace_alpha=0.9, delay=0):
-    target_trace, pred_trace = align_for_delay(
-        spike_trace(input_spikes, trace_alpha), spike_trace(output_spikes, trace_alpha), delay
+
+import numpy as np
+
+
+def _causal_spike_credit(target_times, pred_times, trace_alpha):
+    """
+    Maximum one-to-one spike matching credit.
+
+    A prediction only matches a target if:
+        pred_time >= target_time
+
+    Matching credit:
+        trace_alpha ** (pred_time - target_time)
+
+    Uses dynamic programming to find the best matching.
+    """
+    previous = np.zeros(len(pred_times) + 1, dtype=np.float64)
+
+    for target_t in target_times:
+        current = np.zeros_like(previous)
+
+        for j, pred_t in enumerate(pred_times, start=1):
+            # Skip prediction or skip target.
+            current[j] = max(current[j - 1], previous[j])
+
+            # Match only if prediction is not early.
+            if pred_t >= target_t:
+                credit = trace_alpha ** int(pred_t - target_t)
+
+                current[j] = max(
+                    current[j],
+                    previous[j - 1] + credit
+                )
+
+        previous = current
+
+    return float(previous[-1])
+
+
+def reconstruction_loss_components(
+    input_spikes,
+    output_spikes,
+    trace_alpha=0.9,
+    delay=0
+):
+    if not 0 < trace_alpha < 1:
+        raise ValueError("trace_alpha must be between 0 and 1")
+
+    target_spikes, pred_spikes = align_for_delay(
+        input_spikes, output_spikes, delay
     )
-    target_spikes, pred_spikes = align_for_delay(input_spikes, output_spikes, delay)
-    trace_loss = np.mean((target_trace - pred_trace) ** 2)
+
+    if target_spikes.ndim != 2:
+        raise ValueError("Expected shape (timesteps, neurons)")
+
+    total_credit = 0.0
+
+    # Match spikes separately for each neuron.
+    for neuron in range(target_spikes.shape[1]):
+        target_times = np.flatnonzero(
+            target_spikes[:, neuron] == 1
+        )
+
+        pred_times = np.flatnonzero(
+            pred_spikes[:, neuron] == 1
+        )
+
+        total_credit += _causal_spike_credit(
+            target_times, pred_times, trace_alpha
+        )
+
     input_count = np.sum(target_spikes)
     output_count = np.sum(pred_spikes)
-    count_loss = ((output_count - input_count) / (input_count + 1e-12)) ** 2
-    return float(trace_loss), float(count_loss)
+
+    # One-sided temporal reconstruction loss.
+    total_spikes = input_count + output_count
+
+    trace_loss = (
+        (total_spikes - 2.0 * total_credit)
+        / max(total_spikes, 1.0)
+    )
+
+    # Original spike-count loss.
+    count_loss = (
+        (output_count - input_count)
+        / (input_count + 1e-12)
+    ) ** 2
+
+    return float(max(trace_loss, 0.0)), float(count_loss)
 
 
-def reconstruction_loss(input_spikes, output_spikes, trace_alpha=0.9, count_weight=0.01, delay=0):
-    tl, cl = reconstruction_loss_components(input_spikes, output_spikes, trace_alpha, delay)
+def reconstruction_loss(
+    input_spikes,
+    output_spikes,
+    trace_alpha=0.9,
+    count_weight=0.01,
+    delay=0
+):
+    tl, cl = reconstruction_loss_components(
+        input_spikes, output_spikes, trace_alpha, delay
+    )
+
     return tl + count_weight * cl
-
 
 def reconstruction_counts(input_spikes, output_spikes, delay=0):
     a, b = align_for_delay(input_spikes, output_spikes, delay)
